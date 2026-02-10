@@ -3,7 +3,6 @@ package ru.rollsroms.bot;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.AnswerPreCheckoutQuery;
 import org.telegram.telegrambots.meta.api.methods.BotApiMethod;
-import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
 import org.telegram.telegrambots.meta.api.methods.send.SendInvoice;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
@@ -91,7 +90,6 @@ public final class RollsRomsBot extends TelegramLongPollingBot {
     long userId = message.getFrom().getId();
     UserSession session = session(userId);
     session.userTag = userTag(message.getFrom());
-
     if (message.hasSuccessfulPayment()) {
       handleSuccessfulPayment(message, session);
       return;
@@ -125,8 +123,8 @@ public final class RollsRomsBot extends TelegramLongPollingBot {
       case AWAITING_PHONE -> handlePhoneInput(chatId, session, text);
       case AWAITING_ADDRESS -> handleAddressInput(chatId, session, text);
       case ADMIN_ADD -> handleAdminAdd(chatId, session, text);
-      case WAITING_PAYMENT -> sendTextSoft(chatId, "Я Вас не понимаю, пожалуйста, нажмите одну из кнопок выше");
-      default -> sendTextSoft(chatId, "Я Вас не понимаю, пожалуйста, нажмите одну из кнопок выше");
+      case WAITING_PAYMENT -> sendText(chatId, "Я Вас не понимаю, пожалуйста, нажмите одну из кнопок выше");
+      default -> sendText(chatId, "Я Вас не понимаю, пожалуйста, нажмите одну из кнопок выше");
     }
   }
 
@@ -380,10 +378,11 @@ public final class RollsRomsBot extends TelegramLongPollingBot {
       return;
     }
 
-    String fileId = mediaStore.getFileId(product.image())
-        .orElseThrow(() -> new IllegalStateException("Missing cached file_id for " + product.image()));
     InputMediaPhoto media = new InputMediaPhoto();
-    media.setMedia(fileId);
+    mediaStore.getFileId(product.image()).ifPresentOrElse(
+        media::setMedia,
+        () -> media.setMedia(mediaStore.getFile(product.image()), product.image())
+    );
     media.setCaption(caption);
     media.setParseMode("HTML");
 
@@ -516,54 +515,14 @@ public final class RollsRomsBot extends TelegramLongPollingBot {
     executeAndTrack(msg, chatId, session(chatId));
   }
 
-  private void sendTextSoft(long chatId, String text) throws TelegramApiException {
-    SendMessage msg = new SendMessage();
-    msg.setChatId(chatId);
-    msg.setText(text);
-    executeAndTrackWithoutCleanup(msg, session(chatId));
-  }
-
   private Message executeAndTrack(BotApiMethod<Message> method, long chatId, UserSession session)
       throws TelegramApiException {
-    cleanupBotMessages(chatId, session);
-    Message message = execute(method);
-    if (message != null) {
-      session.botMessages.add(message.getMessageId());
-    }
-    return message;
+    return execute(method);
   }
 
   private Message executeAndTrack(SendPhoto method, long chatId, UserSession session)
       throws TelegramApiException {
-    cleanupBotMessages(chatId, session);
-    Message message = execute(method);
-    if (message != null) {
-      session.botMessages.add(message.getMessageId());
-    }
-    return message;
-  }
-
-  private Message executeAndTrackWithoutCleanup(BotApiMethod<Message> method, UserSession session)
-      throws TelegramApiException {
-    Message message = execute(method);
-    if (message != null) {
-      session.botMessages.add(message.getMessageId());
-    }
-    return message;
-  }
-
-  private void cleanupBotMessages(long chatId, UserSession session) {
-    if (session.botMessages.isEmpty()) {
-      return;
-    }
-    for (Integer messageId : session.botMessages) {
-      try {
-        DeleteMessage delete = new DeleteMessage(String.valueOf(chatId), messageId);
-        execute(delete);
-      } catch (Exception ignored) {
-      }
-    }
-    session.botMessages.clear();
+    return execute(method);
   }
 
   private InlineKeyboardMarkup startKeyboard() {

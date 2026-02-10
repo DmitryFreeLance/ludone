@@ -1,9 +1,7 @@
 package ru.rollsroms.bot;
 
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ScheduledFuture;
@@ -22,7 +20,6 @@ public final class UserSession {
   public State state = State.IDLE;
   public int catalogIndex = 0;
   public Integer catalogMessageId = null;
-  public final List<Integer> botMessages = new ArrayList<>();
   public final Set<String> cart = new LinkedHashSet<>();
   public final Map<String, Integer> quantities = new LinkedHashMap<>();
   public int qtyIndex = 0;
