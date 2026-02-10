@@ -23,7 +23,7 @@ java -jar target/rollsroms-bot-1.0.0.jar
 ```bash
 docker build -t rollsroms-bot .
 
-docker run -d --name rollsroms-bot \
+docker run -d --name rollsroms-bot --restart unless-stopped \
   -e BOT_TOKEN=xxx \
   -e BOT_USERNAME=your_bot \
   -e PAYMENT_PROVIDER_TOKEN=xxx \

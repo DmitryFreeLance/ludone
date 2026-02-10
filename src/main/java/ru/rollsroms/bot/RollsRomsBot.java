@@ -2,6 +2,8 @@ package ru.rollsroms.bot;
 
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.AnswerPreCheckoutQuery;
+import org.telegram.telegrambots.meta.api.methods.BotApiMethod;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
 import org.telegram.telegrambots.meta.api.methods.send.SendInvoice;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
@@ -123,9 +125,8 @@ public final class RollsRomsBot extends TelegramLongPollingBot {
       case AWAITING_PHONE -> handlePhoneInput(chatId, session, text);
       case AWAITING_ADDRESS -> handleAddressInput(chatId, session, text);
       case ADMIN_ADD -> handleAdminAdd(chatId, session, text);
-      case WAITING_PAYMENT -> sendText(chatId, "Счет на оплату уже отправлен. Если нужно начать заново, нажмите кнопку ниже.");
-      default -> {
-      }
+      case WAITING_PAYMENT -> sendTextSoft(chatId, "Я Вас не понимаю, пожалуйста, нажмите одну из кнопок выше");
+      default -> sendTextSoft(chatId, "Я Вас не понимаю, пожалуйста, нажмите одну из кнопок выше");
     }
   }
 
@@ -163,8 +164,13 @@ public final class RollsRomsBot extends TelegramLongPollingBot {
     }
     if (data != null && data.startsWith(CB_CATALOG_ADD_PREFIX)) {
       String productId = data.substring(CB_CATALOG_ADD_PREFIX.length());
-      if (catalog.findById(productId).isEmpty()) {
+      Product product = catalog.findById(productId).orElse(null);
+      if (product == null) {
         answer(callback, "Товар не найден");
+        return;
+      }
+      if (!product.available()) {
+        answer(callback, "❗️ Временно недоступно для заказа");
         return;
       }
       if (session.cart.add(productId)) {
@@ -332,7 +338,7 @@ public final class RollsRomsBot extends TelegramLongPollingBot {
     msg.setChatId(chatId);
     msg.setText("Здравствуйте! 😊🍫 Это чат-бот ромовых шариков «Rolls Roms».\nХотите сделать заказ?");
     msg.setReplyMarkup(startKeyboard());
-    execute(msg);
+    executeAndTrack(msg, chatId, session(chatId));
   }
 
   private void sendNoThanks(long chatId) throws TelegramApiException {
@@ -340,14 +346,14 @@ public final class RollsRomsBot extends TelegramLongPollingBot {
     msg.setChatId(chatId);
     msg.setText("Спасибо за интерес к Rolls Roms! Если захотите попробовать, мы будем рады вашему заказу.");
     msg.setReplyMarkup(singleButton("🛍 Сделать заказ", CB_START_YES));
-    execute(msg);
+    executeAndTrack(msg, chatId, session(chatId));
   }
 
   private void sendCatalogIntro(long chatId) throws TelegramApiException {
     SendMessage msg = new SendMessage();
     msg.setChatId(chatId);
     msg.setText("Выберите вид десерта:");
-    execute(msg);
+    executeAndTrack(msg, chatId, session(chatId));
   }
 
   private void sendCatalog(long chatId, UserSession session, int index, Integer messageId) throws TelegramApiException {
@@ -356,7 +362,10 @@ public final class RollsRomsBot extends TelegramLongPollingBot {
 
     String caption = product.title() + "\n" + product.description() +
         "\n<i>Цена за 1 шт:\n1 шт — 430 ₽\n2–3 шт — 370 ₽\n4–6 шт — 340 ₽\n7+ шт — 310 ₽</i>";
-    InlineKeyboardMarkup keyboard = catalogKeyboard(index, catalog.size(), product.id());
+    if (!product.available()) {
+      caption += "\n\n❗️ Временно недоступно для заказа";
+    }
+    InlineKeyboardMarkup keyboard = catalogKeyboard(index, catalog.size(), product);
 
     if (messageId == null) {
       SendPhoto sendPhoto = new SendPhoto();
@@ -365,7 +374,7 @@ public final class RollsRomsBot extends TelegramLongPollingBot {
       sendPhoto.setParseMode("HTML");
       sendPhoto.setReplyMarkup(keyboard);
       sendPhoto.setPhoto(buildInputFile(product.image()));
-      Message message = execute(sendPhoto);
+      Message message = executeAndTrack(sendPhoto, chatId, session);
       cachePhotoId(product.image(), message);
       session.catalogMessageId = message.getMessageId();
       return;
@@ -395,7 +404,7 @@ public final class RollsRomsBot extends TelegramLongPollingBot {
     sendPhoto.setCaption("Введите количество " + product.title() + ":");
     sendPhoto.setPhoto(buildInputFile(product.smallImage()));
 
-    Message message = execute(sendPhoto);
+    Message message = executeAndTrack(sendPhoto, chatId, session);
     cachePhotoId(product.smallImage(), message);
   }
 
@@ -416,7 +425,7 @@ public final class RollsRomsBot extends TelegramLongPollingBot {
     msg.setChatId(chatId);
     msg.setText(text.toString());
     msg.setReplyMarkup(summaryKeyboard());
-    execute(msg);
+    executeAndTrack(msg, chatId, session(chatId));
   }
 
   private void scheduleInvoice(long chatId, UserSession session) {
@@ -444,7 +453,7 @@ public final class RollsRomsBot extends TelegramLongPollingBot {
     invoice.setCurrency(order.currency());
     invoice.setPrices(toPrices(order));
     invoice.setProviderData(ReceiptBuilder.build(order, config.taxSystemCode()));
-    execute(invoice);
+    executeAndTrack(invoice, chatId, session(chatId));
   }
 
   private void sendAdminPanel(long chatId) throws TelegramApiException {
@@ -458,7 +467,7 @@ public final class RollsRomsBot extends TelegramLongPollingBot {
     msg.setChatId(chatId);
     msg.setText("Админ панель:");
     msg.setReplyMarkup(keyboard);
-    execute(msg);
+    executeAndTrack(msg, chatId, session(chatId));
   }
 
   private void sendAdminList(long chatId) throws Exception {
@@ -475,7 +484,7 @@ public final class RollsRomsBot extends TelegramLongPollingBot {
     msg.setChatId(chatId);
     msg.setText("Спасибо, что выбрали Rolls Roms! Ваш заказ уже в обработке.");
     msg.setReplyMarkup(singleButton("🛍 Заказать еще", CB_ORDER_AGAIN));
-    execute(msg);
+    executeAndTrack(msg, chatId, session(chatId));
   }
 
   private void notifyAdmins(Order order) throws Exception {
@@ -504,14 +513,63 @@ public final class RollsRomsBot extends TelegramLongPollingBot {
     SendMessage msg = new SendMessage();
     msg.setChatId(chatId);
     msg.setText(text);
-    execute(msg);
+    executeAndTrack(msg, chatId, session(chatId));
+  }
+
+  private void sendTextSoft(long chatId, String text) throws TelegramApiException {
+    SendMessage msg = new SendMessage();
+    msg.setChatId(chatId);
+    msg.setText(text);
+    executeAndTrackWithoutCleanup(msg, session(chatId));
+  }
+
+  private Message executeAndTrack(BotApiMethod<Message> method, long chatId, UserSession session)
+      throws TelegramApiException {
+    cleanupBotMessages(chatId, session);
+    Message message = execute(method);
+    if (message != null) {
+      session.botMessages.add(message.getMessageId());
+    }
+    return message;
+  }
+
+  private Message executeAndTrack(SendPhoto method, long chatId, UserSession session)
+      throws TelegramApiException {
+    cleanupBotMessages(chatId, session);
+    Message message = execute(method);
+    if (message != null) {
+      session.botMessages.add(message.getMessageId());
+    }
+    return message;
+  }
+
+  private Message executeAndTrackWithoutCleanup(BotApiMethod<Message> method, UserSession session)
+      throws TelegramApiException {
+    Message message = execute(method);
+    if (message != null) {
+      session.botMessages.add(message.getMessageId());
+    }
+    return message;
+  }
+
+  private void cleanupBotMessages(long chatId, UserSession session) {
+    if (session.botMessages.isEmpty()) {
+      return;
+    }
+    for (Integer messageId : session.botMessages) {
+      try {
+        DeleteMessage delete = new DeleteMessage(String.valueOf(chatId), messageId);
+        execute(delete);
+      } catch (Exception ignored) {
+      }
+    }
+    session.botMessages.clear();
   }
 
   private InlineKeyboardMarkup startKeyboard() {
     List<List<InlineKeyboardButton>> rows = new ArrayList<>();
     rows.add(List.of(
-        button("✅ Да", CB_START_YES),
-        button("❌ Нет", CB_START_NO)
+        button("🛍 Сделать заказ", CB_START_YES)
     ));
     InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
     markup.setKeyboard(rows);
@@ -533,7 +591,7 @@ public final class RollsRomsBot extends TelegramLongPollingBot {
     return markup;
   }
 
-  private InlineKeyboardMarkup catalogKeyboard(int index, int total, String productId) {
+  private InlineKeyboardMarkup catalogKeyboard(int index, int total, Product product) {
     InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
     List<List<InlineKeyboardButton>> rows = new ArrayList<>();
     String counter = "📦 " + (index + 1) + "/" + total;
@@ -543,9 +601,15 @@ public final class RollsRomsBot extends TelegramLongPollingBot {
         button(counter, CB_NOOP),
         button("➡️", CB_CATALOG_NEXT)
     ));
-    rows.add(List.of(
-        button("🧺 Добавить в корзину", CB_CATALOG_ADD_PREFIX + productId)
-    ));
+    if (product.available()) {
+      rows.add(List.of(
+          button("🧺 Добавить в корзину", CB_CATALOG_ADD_PREFIX + product.id())
+      ));
+    } else {
+      rows.add(List.of(
+          button("⛔ Недоступно", CB_NOOP)
+      ));
+    }
     rows.add(List.of(
         button("✅ Оформить заказ", CB_CATALOG_CHECKOUT)
     ));
