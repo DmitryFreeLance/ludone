@@ -358,11 +358,16 @@ public final class RollsRomsBot extends TelegramLongPollingBot {
     Product product = catalog.get(index);
     session.catalogIndex = index;
 
-    String caption = product.title() + "\n" + product.description() +
-        "\n<i>Цена за 1 шт:\n1 шт — 430 ₽\n2–3 шт — 370 ₽\n4–6 шт — 340 ₽\n7+ шт — 310 ₽</i>";
-    if (!product.available()) {
-      caption += "\n\n❗️ Временно недоступно для заказа";
+    StringBuilder captionBuilder = new StringBuilder(product.title());
+    if (product.available()) {
+      if (product.description() != null && !product.description().isBlank()) {
+        captionBuilder.append("\n").append(product.description());
+      }
+      captionBuilder.append("\n<i>Цена за 1 шт:\n1 шт — 430 ₽\n2–3 шт — 370 ₽\n4–6 шт — 340 ₽\n7+ шт — 310 ₽</i>");
+    } else {
+      captionBuilder.append("\n\n❗️ Временно недоступно для заказа");
     }
+    String caption = captionBuilder.toString();
     InlineKeyboardMarkup keyboard = catalogKeyboard(index, catalog.size(), product);
 
     if (messageId == null) {
