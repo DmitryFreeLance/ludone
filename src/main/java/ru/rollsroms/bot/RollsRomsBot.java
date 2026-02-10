@@ -34,6 +34,7 @@ public final class RollsRomsBot extends TelegramLongPollingBot {
   private static final String CB_CATALOG_NEXT = "cat_next";
   private static final String CB_CATALOG_ADD_PREFIX = "add:";
   private static final String CB_CATALOG_CHECKOUT = "checkout";
+  private static final String CB_PAY_NOW = "pay_now";
   private static final String CB_BACK_START = "back_start";
   private static final String CB_ORDER_AGAIN = "order_again";
   private static final String CB_ADMIN_ADD = "admin_add";
@@ -184,6 +185,20 @@ public final class RollsRomsBot extends TelegramLongPollingBot {
       answer(callback, null);
       return;
     }
+    if (CB_PAY_NOW.equals(data)) {
+      if (session.state != UserSession.State.WAITING_PAYMENT || session.pendingOrder == null) {
+        answer(callback, "Сначала оформите заказ.");
+        return;
+      }
+      if (session.invoiceSent) {
+        answer(callback, "Счет уже отправлен.");
+        return;
+      }
+      sendInvoice(chatId, session.pendingOrder);
+      session.invoiceSent = true;
+      answer(callback, null);
+      return;
+    }
     if (CB_BACK_START.equals(data)) {
       session.resetOrder();
       session.state = UserSession.State.IDLE;
@@ -272,7 +287,6 @@ public final class RollsRomsBot extends TelegramLongPollingBot {
     session.pendingOrder = buildOrder(chatId, session);
 
     sendOrderSummary(chatId, session.pendingOrder);
-    scheduleInvoice(chatId, session);
   }
 
   private void handleAdminAdd(long chatId, UserSession session, String text) throws Exception {
@@ -341,13 +355,14 @@ public final class RollsRomsBot extends TelegramLongPollingBot {
     session.catalogIndex = index;
 
     String caption = product.title() + "\n" + product.description() +
-        "\nЦена за 1 шт: 430 ₽ (1 шт), 370 ₽ (2–3), 340 ₽ (4–6), 310 ₽ (7+)";
+        "\n<i>Цена за 1 шт:\n1 шт — 430 ₽\n2–3 шт — 370 ₽\n4–6 шт — 340 ₽\n7+ шт — 310 ₽</i>";
     InlineKeyboardMarkup keyboard = catalogKeyboard(index, catalog.size(), product.id());
 
     if (messageId == null) {
       SendPhoto sendPhoto = new SendPhoto();
       sendPhoto.setChatId(chatId);
       sendPhoto.setCaption(caption);
+      sendPhoto.setParseMode("HTML");
       sendPhoto.setReplyMarkup(keyboard);
       sendPhoto.setPhoto(buildInputFile(product.image()));
       Message message = execute(sendPhoto);
@@ -361,6 +376,7 @@ public final class RollsRomsBot extends TelegramLongPollingBot {
     InputMediaPhoto media = new InputMediaPhoto();
     media.setMedia(fileId);
     media.setCaption(caption);
+    media.setParseMode("HTML");
 
     EditMessageMedia edit = new EditMessageMedia();
     edit.setChatId(chatId);
@@ -394,12 +410,12 @@ public final class RollsRomsBot extends TelegramLongPollingBot {
           .append("\n");
     }
     text.append("\nИтого: ").append(formatMoney(order.total(), order.currency())).append("\n\n");
-    text.append("Если все верно, счет на оплату придет ниже. Если нужно исправить, нажмите кнопку и вернитесь в меню.");
+    text.append("Если все верно, нажмите «Оплатить» ниже. Если нужно исправить, нажмите кнопку и вернитесь в меню.");
 
     SendMessage msg = new SendMessage();
     msg.setChatId(chatId);
     msg.setText(text.toString());
-    msg.setReplyMarkup(singleButton("🔙 Вернуться в меню", CB_BACK_START));
+    msg.setReplyMarkup(summaryKeyboard());
     execute(msg);
   }
 
@@ -505,6 +521,15 @@ public final class RollsRomsBot extends TelegramLongPollingBot {
   private InlineKeyboardMarkup singleButton(String text, String data) {
     InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
     markup.setKeyboard(List.of(List.of(button(text, data))));
+    return markup;
+  }
+
+  private InlineKeyboardMarkup summaryKeyboard() {
+    InlineKeyboardMarkup markup = new InlineKeyboardMarkup();
+    List<List<InlineKeyboardButton>> rows = new ArrayList<>();
+    rows.add(List.of(button("💳 Оплатить", CB_PAY_NOW)));
+    rows.add(List.of(button("🔙 Вернуться в меню", CB_BACK_START)));
+    markup.setKeyboard(rows);
     return markup;
   }
 
