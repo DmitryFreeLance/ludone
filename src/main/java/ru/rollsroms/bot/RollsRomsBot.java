@@ -198,9 +198,9 @@ public final class RollsRomsBot extends TelegramLongPollingBot {
         answer(callback, "Счет уже отправлен.");
         return;
       }
+      answer(callback, null);
       sendInvoice(chatId, session.pendingOrder);
       session.invoiceSent = true;
-      answer(callback, null);
       return;
     }
     if (CB_BACK_START.equals(data)) {
