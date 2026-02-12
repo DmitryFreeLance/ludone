@@ -703,10 +703,7 @@ public final class RollsRomsBot extends TelegramLongPollingBot {
     if (totalQty <= 3) {
       return 37000;
     }
-    if (totalQty <= 6) {
-      return 34000;
-    }
-    return 31000;
+    return 34000;
   }
 
   private String userTag(User user) {
