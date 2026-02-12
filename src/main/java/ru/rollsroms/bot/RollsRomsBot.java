@@ -191,16 +191,22 @@ public final class RollsRomsBot extends TelegramLongPollingBot {
     }
     if (CB_PAY_NOW.equals(data)) {
       if (session.state != UserSession.State.WAITING_PAYMENT || session.pendingOrder == null) {
-        answer(callback, "Сначала оформите заказ.");
+        answerSilently(callback, "Сначала оформите заказ.");
         return;
       }
       if (session.invoiceSent) {
-        answer(callback, "Счет уже отправлен.");
+        answerSilently(callback, "Счет уже отправлен.");
         return;
       }
-      answer(callback, null);
-      sendInvoice(chatId, session.pendingOrder);
-      session.invoiceSent = true;
+      answerSilently(callback, "Счет отправлен.");
+      scheduler.execute(() -> {
+        try {
+          sendInvoice(chatId, session.pendingOrder);
+          session.invoiceSent = true;
+        } catch (Exception e) {
+          e.printStackTrace();
+        }
+      });
       return;
     }
     if (CB_BACK_START.equals(data)) {
@@ -234,15 +240,15 @@ public final class RollsRomsBot extends TelegramLongPollingBot {
       } else {
         sendText(chatId, "Доступ к админ панели ограничен.");
       }
-      answer(callback, null);
+      answerSilently(callback, null);
       return;
     }
     if (CB_NOOP.equals(data)) {
-      answer(callback, null);
+      answerSilently(callback, null);
       return;
     }
 
-    answer(callback, null);
+    answerSilently(callback, null);
   }
 
   private void handleQtyInput(long chatId, UserSession session, String text) throws Exception {
@@ -602,6 +608,14 @@ public final class RollsRomsBot extends TelegramLongPollingBot {
     execute(answer);
   }
 
+  private void answerSilently(CallbackQuery callback, String text) {
+    try {
+      answer(callback, text);
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+  }
+
   private String extractCommand(Message message) {
     if (message.getEntities() == null) {
       return message.getText();
@@ -660,11 +674,7 @@ public final class RollsRomsBot extends TelegramLongPollingBot {
 
   private List<LabeledPrice> toPrices(Order order) {
     List<LabeledPrice> prices = new ArrayList<>();
-    for (OrderItem item : order.items()) {
-      int lineTotal = item.unitPrice() * item.quantity();
-      String label = item.product().title() + " x" + item.quantity();
-      prices.add(new LabeledPrice(label, lineTotal));
-    }
+    prices.add(new LabeledPrice("Заказ Rolls Roms", order.total()));
     return prices;
   }
 
