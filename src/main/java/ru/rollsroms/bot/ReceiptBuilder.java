@@ -29,7 +29,7 @@ public final class ReceiptBuilder {
       Map<String, Object> line = new LinkedHashMap<>();
       line.put("description", item.product().title());
       line.put("quantity", formatQty(item.quantity()));
-      line.put("amount", amount(item.unitPrice() * item.quantity(), order.currency()));
+      line.put("amount", amount(item.unitPrice(), order.currency()));
       line.put("vat_code", 1);
       line.put("payment_subject", "commodity");
       line.put("payment_mode", "full_payment");
