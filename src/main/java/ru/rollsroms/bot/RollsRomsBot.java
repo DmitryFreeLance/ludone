@@ -334,7 +334,7 @@ public final class RollsRomsBot extends TelegramLongPollingBot {
   private void sendStart(long chatId) throws TelegramApiException {
     SendMessage msg = new SendMessage();
     msg.setChatId(chatId);
-    msg.setText("Здравствуйте! 😊🍫 Это чат-бот ромовых шариков «Rolls Roms».\nХотите сделать заказ?");
+    msg.setText("Здравствуйте! 😊🍫 Это чат-бот ромовых шариков «Rolls-Roms».\nХотите сделать заказ?");
     msg.setReplyMarkup(startKeyboard());
     executeAndTrack(msg, chatId, session(chatId));
   }
