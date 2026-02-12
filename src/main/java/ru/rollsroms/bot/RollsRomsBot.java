@@ -271,11 +271,12 @@ public final class RollsRomsBot extends TelegramLongPollingBot {
   }
 
   private void handlePhoneInput(long chatId, UserSession session, String text) throws Exception {
-    if (text.isBlank()) {
-      sendText(chatId, "Введите номер телефона:");
+    String normalized = normalizePhone(text);
+    if (normalized == null) {
+      sendText(chatId, "Введите номер телефона в формате +79990000000:");
       return;
     }
-    session.phone = text;
+    session.phone = normalized;
     session.state = UserSession.State.AWAITING_ADDRESS;
     sendText(chatId, "Укажите адрес доставки:");
   }
@@ -363,7 +364,7 @@ public final class RollsRomsBot extends TelegramLongPollingBot {
       if (product.description() != null && !product.description().isBlank()) {
         captionBuilder.append("\n").append(product.description());
       }
-      captionBuilder.append("\n\n<i>Цена за 1 шт:\n1 шт — 430 ₽\n2–3 шт — 370 ₽\n4–6 шт — 340 ₽</i>");
+      captionBuilder.append("\n\n<i>Цена за 1 упаковку:\n1 упаковка — 430 ₽\n2–3 упаковки — 370 ₽\n4–6 упаковок — 340 ₽</i>");
     } else {
       captionBuilder.append("\n\n❗️ Временно недоступно для заказа");
     }
@@ -504,6 +505,7 @@ public final class RollsRomsBot extends TelegramLongPollingBot {
           .append(" x").append(item.quantity())
           .append("\n");
     }
+    text.append("Сумма заказа: ").append(formatMoney(order.total(), order.currency())).append("\n");
 
     for (Long adminId : db.listAdmins()) {
       SendMessage msg = new SendMessage();
@@ -668,6 +670,30 @@ public final class RollsRomsBot extends TelegramLongPollingBot {
 
   private String formatMoney(int amount, String currency) {
     return String.format(Locale.US, "%.2f %s", amount / 100.0, currency);
+  }
+
+  private String normalizePhone(String raw) {
+    if (raw == null) {
+      return null;
+    }
+    String trimmed = raw.trim();
+    if (trimmed.isEmpty()) {
+      return null;
+    }
+    String digits = trimmed.replaceAll("[^0-9]", "");
+    if (digits.length() == 11 && digits.startsWith("8")) {
+      return "+7" + digits.substring(1);
+    }
+    if (digits.length() == 11 && digits.startsWith("7")) {
+      return "+" + digits;
+    }
+    if (digits.length() == 10) {
+      return "+7" + digits;
+    }
+    if (trimmed.startsWith("+") && digits.length() >= 11) {
+      return "+" + digits;
+    }
+    return null;
   }
 
   private int priceForTotalQty(int totalQty) {
