@@ -430,7 +430,7 @@ public final class RollsRomsBot extends TelegramLongPollingBot {
           .append("\n");
     }
     text.append("\nИтого: ").append(formatMoney(order.total(), order.currency())).append("\n\n");
-    text.append("Если все верно, нажмите «Оплатить» ниже. Если нужно исправить, нажмите кнопку и вернитесь в меню.");
+    text.append("Доставка будет произведена посредством ПВХ Озон в течение 2-3 дней. Уведомление придет к вам в личный кабинет Озон\" (или в виде смс на Ваш номер телефона)\nЕсли все верно, нажмите «Оплатить» ниже. Если нужно исправить, нажмите кнопку и вернитесь в меню.");
 
     SendMessage msg = new SendMessage();
     msg.setChatId(chatId);
