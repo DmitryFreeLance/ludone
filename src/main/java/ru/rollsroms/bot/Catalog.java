@@ -15,7 +15,7 @@ public final class Catalog {
     List<Product> items = new ArrayList<>();
     items.add(new Product(
         "classic",
-        "Ромовые шарики классические",
+        "Ромовый шарик «Rolls-Roms»",
         "Классический, с шоколадной вермишелью",
         43000,
         true,
@@ -24,8 +24,8 @@ public final class Catalog {
     ));
     items.add(new Product(
         "pine",
-        "Ромовые шарики с кедровым орехом",
-        "Кедровый орех, ароматный ромовый бисквит",
+        "Ромовый шарик «Rolls-Roms»",
+        "Ромовый шарик с кедровым орехом",
         43000,
         false,
         "images/2.jpg",
@@ -33,8 +33,8 @@ public final class Catalog {
     ));
     items.add(new Product(
         "walnut",
-        "Ромовые шарики с обсыпкой грецким орехом",
-        "Грецкий орех, нежный ромовый крем",
+        "Ромовый шарик «Rolls-Roms»",
+        "Ромовый шарик с грецким орехом",
         43000,
         false,
         "images/3.jpg",
