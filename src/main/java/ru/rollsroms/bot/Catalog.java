@@ -24,7 +24,7 @@ public final class Catalog {
     ));
     items.add(new Product(
         "pine",
-        "Ромовый шарик «Rolls-Roms»",
+        "Ромовый шарик «Rolls-Roms»\nРомовый шарик с кедровым орехом",
         "Ромовый шарик с кедровым орехом",
         43000,
         false,
@@ -33,7 +33,7 @@ public final class Catalog {
     ));
     items.add(new Product(
         "walnut",
-        "Ромовый шарик «Rolls-Roms»",
+        "Ромовый шарик «Rolls-Roms»\nРомовый шарик с грецким орехом",
         "Ромовый шарик с грецким орехом",
         43000,
         false,
