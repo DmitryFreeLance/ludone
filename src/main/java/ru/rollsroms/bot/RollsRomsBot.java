@@ -370,7 +370,7 @@ public final class RollsRomsBot extends TelegramLongPollingBot {
       if (product.description() != null && !product.description().isBlank()) {
         captionBuilder.append("\n").append(product.description());
       }
-      captionBuilder.append("\n\n<i>Цена за 1 упаковку:\n1 упаковка — 430 ₽\n2–3 упаковки — 370 ₽\n4–6 упаковок — 340 ₽</i>");
+      captionBuilder.append("\n\n<i>Цена за 1 упаковку:\n1 упаковка — 445 ₽\n2–3 упаковки — 385 ₽\n4–6 упаковок — 355 ₽</i>");
     } else {
       captionBuilder.append("\n\n❗️ Временно недоступно для заказа");
     }
