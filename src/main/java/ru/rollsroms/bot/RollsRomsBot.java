@@ -370,7 +370,7 @@ public final class RollsRomsBot extends TelegramLongPollingBot {
             if (product.description() != null && !product.description().isBlank()) {
                 captionBuilder.append("\n").append(product.description());
             }
-            captionBuilder.append("\n\n<i>Цена за 1 упаковку:\n1 упаковка — 495₽/уп\n2 упаковки — 395₽/уп\n3–5 упаковок — 375₽/уп\n6+ упаковок — 370₽/уп</i>\n<b>от 30 упаковок - особые условия</b>");
+            captionBuilder.append("\n\n<i>Цена за 1 упаковку:\n1 упаковка — 495₽/уп\n2 упаковки — 395₽/уп\n3–5 упаковок — 375₽/уп\n6+ упаковок — 360₽/уп</i>\n<b>от 30 упаковок - особые условия</b>");
         } else {
             captionBuilder.append("\n\n❗️ Временно недоступно для заказа");
         }
@@ -716,7 +716,7 @@ public final class RollsRomsBot extends TelegramLongPollingBot {
         if (totalQty <= 5) {
             return 37500;
         }
-        return 37000;
+        return 36000;
     }
 
     private String userTag(User user) {
