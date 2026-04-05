@@ -15,30 +15,36 @@ public final class Catalog {
     List<Product> items = new ArrayList<>();
     items.add(new Product(
         "classic",
-        "Ромовый шарик «Rolls-Roms»",
+        "Ромовый шарик «Rolls-Roms» классический",
         "Классический, с шоколадной вермишелью",
-        43000,
         true,
         "images/1.jpg",
-        "images/1s.jpg"
+        49500,
+        39500,
+        37500,
+        36000
     ));
     items.add(new Product(
         "pine",
-        "Ромовый шарик «Rolls-Roms»\nРомовый шарик с кедровым орехом",
+        "Ромовый шарик «Rolls-Roms» с кедровым орехом",
         "Ромовый шарик с кедровым орехом",
-        43000,
-        false,
+        true,
         "images/2.jpg",
-        "images/2.jpg"
+        57000,
+        48500,
+        45500,
+        43000
     ));
     items.add(new Product(
         "walnut",
-        "Ромовый шарик «Rolls-Roms»\nРомовый шарик с грецким орехом",
+        "Ромовый шарик «Rolls-Roms» с грецким орехом",
         "Ромовый шарик с грецким орехом",
-        43000,
-        false,
+        true,
         "images/3.jpg",
-        "images/3.jpg"
+        51500,
+        43500,
+        41000,
+        38500
     ));
     return new Catalog(items);
   }

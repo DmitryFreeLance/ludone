@@ -41,6 +41,7 @@ public final class RollsRomsBot extends TelegramLongPollingBot {
     private static final String CB_ADMIN_ADD = "admin_add";
     private static final String CB_ADMIN_LIST = "admin_list";
     private static final String CB_NOOP = "noop";
+    private static final String QTY_PROMPT_IMAGE = "images/1s.jpg";
 
     private final BotConfig config;
     private final Database db;
@@ -370,7 +371,9 @@ public final class RollsRomsBot extends TelegramLongPollingBot {
             if (product.description() != null && !product.description().isBlank()) {
                 captionBuilder.append("\n").append(product.description());
             }
-            captionBuilder.append("\n\n<i>Цена за 1 упаковку:\n1 упаковка — 495₽/уп\n2 упаковки — 395₽/уп\n3–5 упаковок — 375₽/уп\n6+ упаковок — 360₽/уп</i>\n<b>от 30 упаковок - особые условия</b>");
+            captionBuilder.append("\n\n")
+                    .append(product.priceTiersText())
+                    .append("\n<b>от 30 штук - особые условия</b>");
         } else {
             captionBuilder.append("\n\n❗️ Временно недоступно для заказа");
         }
@@ -413,10 +416,10 @@ public final class RollsRomsBot extends TelegramLongPollingBot {
         SendPhoto sendPhoto = new SendPhoto();
         sendPhoto.setChatId(chatId);
         sendPhoto.setCaption("Введите количество " + product.title() + ":");
-        sendPhoto.setPhoto(buildInputFile(product.smallImage()));
+        sendPhoto.setPhoto(buildInputFile(QTY_PROMPT_IMAGE));
 
         Message message = executeAndTrack(sendPhoto, chatId, session);
-        cachePhotoId(product.smallImage(), message);
+        cachePhotoId(QTY_PROMPT_IMAGE, message);
     }
 
     private void sendOrderSummary(long chatId, Order order) throws TelegramApiException {
@@ -654,16 +657,11 @@ public final class RollsRomsBot extends TelegramLongPollingBot {
 
     private Order buildOrder(long chatId, UserSession session) {
         List<OrderItem> items = new ArrayList<>();
-        int totalQty = 0;
-        for (String productId : session.cart) {
-            int qty = session.quantities.getOrDefault(productId, 1);
-            totalQty += qty;
-        }
-        int unitPrice = priceForTotalQty(totalQty);
         int total = 0;
         for (String productId : session.cart) {
             Product product = catalog.findById(productId).orElseThrow();
             int qty = session.quantities.getOrDefault(productId, 1);
+            int unitPrice = product.unitPriceFor(qty);
             items.add(new OrderItem(product, qty, unitPrice));
             total += unitPrice * qty;
         }
@@ -704,19 +702,6 @@ public final class RollsRomsBot extends TelegramLongPollingBot {
             return "+" + digits;
         }
         return null;
-    }
-
-    private int priceForTotalQty(int totalQty) {
-        if (totalQty <= 1) {
-            return 49500;
-        }
-        if (totalQty <= 2) {
-            return 39500;
-        }
-        if (totalQty <= 5) {
-            return 37500;
-        }
-        return 36000;
     }
 
     private String userTag(User user) {
