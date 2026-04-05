@@ -368,9 +368,6 @@ public final class RollsRomsBot extends TelegramLongPollingBot {
 
         StringBuilder captionBuilder = new StringBuilder(product.title());
         if (product.available()) {
-            if (product.description() != null && !product.description().isBlank()) {
-                captionBuilder.append("\n").append(product.description());
-            }
             captionBuilder.append("\n\n")
                     .append(product.priceTiersText())
                     .append("\n<b>от 30 штук - особые условия</b>");
@@ -415,7 +412,8 @@ public final class RollsRomsBot extends TelegramLongPollingBot {
 
         SendPhoto sendPhoto = new SendPhoto();
         sendPhoto.setChatId(chatId);
-        sendPhoto.setCaption("Введите количество " + product.title() + ":");
+        sendPhoto.setCaption("Введите количество:\n<b>" + product.variantName() + "</b>");
+        sendPhoto.setParseMode("HTML");
         sendPhoto.setPhoto(buildInputFile(QTY_PROMPT_IMAGE));
 
         Message message = executeAndTrack(sendPhoto, chatId, session);

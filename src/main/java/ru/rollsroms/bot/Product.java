@@ -5,7 +5,7 @@ import java.util.Locale;
 public record Product(
     String id,
     String title,
-    String description,
+    String variantName,
     boolean available,
     String image,
     int priceFor1,

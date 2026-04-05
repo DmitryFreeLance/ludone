@@ -16,7 +16,7 @@ public final class Catalog {
     items.add(new Product(
         "classic",
         "Ромовый шарик «Rolls-Roms» классический",
-        "Классический, с шоколадной вермишелью",
+        "классический",
         true,
         "images/1.jpg",
         49500,
@@ -27,7 +27,7 @@ public final class Catalog {
     items.add(new Product(
         "pine",
         "Ромовый шарик «Rolls-Roms» с кедровым орехом",
-        "Ромовый шарик с кедровым орехом",
+        "с кедровым орехом",
         true,
         "images/2.jpg",
         57000,
@@ -38,7 +38,7 @@ public final class Catalog {
     items.add(new Product(
         "walnut",
         "Ромовый шарик «Rolls-Roms» с грецким орехом",
-        "Ромовый шарик с грецким орехом",
+        "с грецким орехом",
         true,
         "images/3.jpg",
         51500,
