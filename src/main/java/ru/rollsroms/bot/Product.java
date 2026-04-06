@@ -8,6 +8,7 @@ public record Product(
     String variantName,
     boolean available,
     String image,
+    String qtyImage,
     int priceFor1,
     int priceFor2,
     int priceFor3to5,

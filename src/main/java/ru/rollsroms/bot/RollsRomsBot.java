@@ -41,7 +41,6 @@ public final class RollsRomsBot extends TelegramLongPollingBot {
     private static final String CB_ADMIN_ADD = "admin_add";
     private static final String CB_ADMIN_LIST = "admin_list";
     private static final String CB_NOOP = "noop";
-    private static final String QTY_PROMPT_IMAGE = "images/1s.jpg";
 
     private final BotConfig config;
     private final Database db;
@@ -414,10 +413,10 @@ public final class RollsRomsBot extends TelegramLongPollingBot {
         sendPhoto.setChatId(chatId);
         sendPhoto.setCaption("Введите количество:\n<b>" + product.variantName() + "</b>");
         sendPhoto.setParseMode("HTML");
-        sendPhoto.setPhoto(buildInputFile(QTY_PROMPT_IMAGE));
+        sendPhoto.setPhoto(buildInputFile(product.qtyImage()));
 
         Message message = executeAndTrack(sendPhoto, chatId, session);
-        cachePhotoId(QTY_PROMPT_IMAGE, message);
+        cachePhotoId(product.qtyImage(), message);
     }
 
     private void sendOrderSummary(long chatId, Order order) throws TelegramApiException {
